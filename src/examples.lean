@@ -192,6 +192,38 @@ def ordered_ring_is_struc_of_ordered_ring_lang {A : Type} [ordered_ring A]
                         exact v.nth 0 < v.nth 1}},
    ..ring_is_struc_of_ring_lang}
 
+def ordered_semiring_lang : lang := {F := λ n : ℕ+,
+                                          if n = 2 then fin 2 else empty,
+                                     R := λ n : ℕ+,
+                                          if n = 2 then unit else empty,
+                                     C := fin 2}
+
+def N_arith_semiring : struc ordered_semiring_lang :=
+ { univ := ℕ,
+   R := λ n f, by { cases n, cases n_val,
+                      {linarith},
+                    cases n_val,
+                      {exact ∅},
+                    cases n_val,
+                      {exact {v : vector ℕ 2 | v.nth 0 < v.nth 1 }},
+                    exact ∅},
+   ..semiring_is_struc_of_semiring_lang
+ }
+
+def N_arith : struc ordered_ring_lang :=
+  {
+    univ := ℕ,
+    F := λ n f, by {cases n, cases n_val,
+                      {linarith},
+                    cases n_val,
+                      {sorry},
+                    cases n_val, cases f,
+                      {cases f_val,
+                        exact (+),
+                        exact (*)},
+                    cases f},
+    ..N_arith_semiring
+  }
 
 /-- A type with linear order is a structure on dense-linear-order language.-/
 def LO_is_struc_of_DLO_lang {A : Type} [linear_order A] [inhabited A]
