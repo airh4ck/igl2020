@@ -151,7 +151,7 @@ notation ` ∀' ` : 110 := all
 notation ` ⊤' ` : 110 := tt
 notation ` ⊥' ` : 110 := ff
 
-def impl (φ₁ : formula L) (φ₂ : formula L) := ¬'φ₁ ∨' φ₂
+def impl (φ₁ : formula L) (φ₂ : formula L) := (¬'φ₁) ∨' φ₂
 infix ` →' ` : 80 := impl
 
 def bicond (φ₁ : formula L) (φ₂ : formula L) := (φ₁ →' φ₂)∧'(φ₂ →' φ₁)
@@ -246,19 +246,67 @@ variables {L : lang} {M : struc L} {ϕ : formula L} {σ : sentence L}
 `M`, or consequently, what it means for a structure `M` to model/satisfy a
 formula.-/
 @[reducible] def models_formula : (ℕ → M.univ) → formula L →  Prop
-| _ ⊤'           := true
-| _ ⊥'           := false
-| va (t₁ =' t₂)   := (t₁^^va) = (t₂^^va)
+| _ ⊤'                  := true
+| _ ⊥'                  := false
+| va (t₁ =' t₂)         := (t₁^^va) = (t₂^^va)
 | va (formula.rel r ts) := vector.map (^^va) ts ∈ M.R r
-| va (¬' ϕ)       :=  ¬ models_formula va ϕ
-| va (ϕ₁ ∧' ϕ₂)   := models_formula va ϕ₁ ∧ models_formula va ϕ₂
-| va (ϕ₁ ∨' ϕ₂)   := models_formula va ϕ₁ ∨ models_formula va ϕ₂
-| va (∃' v ϕ)     := ∃ (x : M.univ), let va_updated := function.update va v x in
+| va (¬' ϕ)             :=  ¬ models_formula va ϕ
+| va (ϕ₁ ∧' ϕ₂)         := models_formula va ϕ₁ ∧ models_formula va ϕ₂
+| va (ϕ₁ ∨' ϕ₂)         := models_formula va ϕ₁ ∨ models_formula va ϕ₂
+| va (∃' v ϕ)           := ∃ (x : M.univ), let va_updated := function.update va v x in
                                       models_formula va_updated ϕ
-| va (∀' v ϕ)     := ∀ (x : M.univ), let va_updated := function.update va v x in
+| va (∀' v ϕ)           := ∀ (x : M.univ), let va_updated := function.update va v x in
                                       models_formula va_updated ϕ
 
 infix ` ⊨ ` : 100 := models_formula  -- Type this as a variant of \entails.
+
+lemma models_or_assoc {va : ℕ → M.univ} (φ₁ φ₂ φ₃ : formula L) :
+  va ⊨ (φ₁ ∨' φ₂ ∨' φ₃) ↔ va ⊨ (φ₁ ∨' (φ₂ ∨' φ₃)) :=
+begin
+  repeat {rw models_formula},
+  tauto
+end
+
+lemma models_or_comm {va : ℕ → M.univ} (φ₁ φ₂ : formula L) :
+  va ⊨ (φ₁ ∨' φ₂) ↔ va ⊨ (φ₂ ∨' φ₁) :=
+begin
+  repeat {rw models_formula},
+  tauto
+end
+
+lemma models_neg_neg_iff_models_self {va : ℕ → M.univ} {φ : formula L} :
+  va ⊨ ¬' ¬' φ ↔ va ⊨ φ :=
+begin
+  repeat {rw models_formula},
+  rw auto.not_not_eq
+end
+
+lemma models_or_iff_not_models_impl {va : ℕ → M.univ} {φ₁ φ₂ : formula L} :
+  va ⊨ (φ₁ ∨' φ₂) ↔ va ⊨ ((¬'φ₁) →' φ₂) :=
+begin
+  rw formula.impl,
+  repeat {rw models_formula},
+  rw auto.not_not_eq,
+end
+
+lemma models_impl_iff_models_not_or {va : ℕ → M.univ} {φ₁ φ₂ : formula L} :
+  va ⊨ (φ₁ →' φ₂) ↔ va ⊨ ((¬'φ₁) ∨' φ₂) :=
+begin
+  rw formula.impl
+end
+
+lemma models_formula_impl {va : ℕ → M.univ} {φ₁ φ₂ : formula L} : va ⊨ (φ₁ →' φ₂) ↔ va ⊨ φ₁ → va ⊨ φ₂ := 
+begin
+  split,
+  { intros h₁ h₂,
+    rw [formula.impl, models_formula, models_formula] at h₁,
+    cases h₁;
+      tauto },
+  { intro h, 
+    rw [formula.impl, models_formula, models_formula],
+    rw imp_iff_not_or at h,
+    exact h }
+end
 
 def models_sentence (M : struc L) (σ : sentence L) : Prop :=
   ∃ va : ℕ → M.univ, va ⊨ σ

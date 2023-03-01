@@ -418,9 +418,9 @@ def DLO_theory : set (sentence lang.DLO_lang) :=
      by {push_neg,
          rintros _ _ _ _ (⟨_ | _ | _⟩ | ⟨_ | _ | _⟩ | _ | _ | _);
          tauto}⟩,
-   ⟨∀'1 (∀'2 (∀' 3 ((φ₁ ∨' φ₂) ∨' (var 1 =' var 2)))),
+   ⟨∀'1 (∀'2 ((φ₁ ∨' φ₂) ∨' (var 1 =' var 2))),
      by {push_neg,
-         rintro (_ | _ | _ | _ | _ | _) _ _ _;
+         rintro (_ | _ | _ | _ | _ | _) _ _;
          exact dec_trivial <|> tauto}⟩,
    ⟨∀'1 (∃'2 (φ₁)),
      by {push_neg,
@@ -436,18 +436,89 @@ def DLO_theory : set (sentence lang.DLO_lang) :=
             tauto}⟩,
   }
 
+lemma one_ne_two : 1 ≠ 2 :=
+begin
+  have one_ne_two := nat.succ_ne_self 1,
+  rw nat.succ_eq_add_one at one_ne_two,
+  ring at one_ne_two,
+  symmetry,
+  exact one_ne_two,
+end
+
 
 def Q_Model_DLO : Model (DLO_theory) :=
  { M := Q_struc,
    satis :=
    begin
-     rintros σ (⟨_, _⟩ | x | _ | ⟨_, _⟩ | ⟨_, _⟩ | H);
+     rintros σ (⟨_, _⟩ | x | _ | ⟨_, _⟩ | ⟨_, _⟩ | _ | _);
      use function.const ℕ (42 : ℚ), -- 42 is just an arbitrary value
-     { rintros _ _ ⟨_, _⟩, tauto},
-     { sorry },
-     { sorry },
+     { rintros _ _ ⟨_, _⟩, tauto },
+     { rw x,
+       intros x va₁ univ₂ y univ₃ va₃,
+
+       repeat {rw models_formula_impl},
+       intros h₁ h₂,
+
+       cases h₁,
+       cases h₂,
+       simp only [vector.map, list.map, vector.nth, vector.head,
+                    fin.val_one, term_interpretation, rat.le,
+                    function.update_same, list.nth_le] at h₁_left h₂_left h₁_right h₂_right;
+       norm_num at h₁_left h₂_left h₁_right h₂_right,
+       split;
+         simp only [vector.map, list.map, vector.nth, vector.head,
+                    fin.val_one, term_interpretation, rat.le,
+                    function.update_same, list.nth_le];
+         norm_num,
+       { rw rat.nonneg_iff_zero_le at h₁_left h₂_left ⊢,
+         rw le_sub_iff_add_le' at h₁_left h₂_left ⊢,
+         ring at h₁_left h₂_left ⊢,
+         exact le_trans h₁_left h₂_left },
+       { rw rat.nonneg_iff_zero_le at h₁_right h₂_right ⊢,
+         rw le_sub_iff_add_le' at h₁_right h₂_right ⊢,
+         ring at h₁_right h₂_right ⊢, 
+         rw not_le at h₁_right h₂_right ⊢,
+         exact lt_trans h₁_right h₂_right }},
+     { rw ᾰ,
+       intros x va₁ y va₂,
+       rw [models_or_iff_not_models_impl, models_formula_impl],
+       contrapose,
+       intro h,
+       push_neg,
+       rw [models_formula] at h,
+       repeat {rw term_interpretation at h},
+       rw models_formula,
+       rw ← ne.def at h, 
+       rw ne_iff_lt_or_gt at h,
+       cases h,
+       { left,
+         split;
+          simp only [vector.map, list.map, vector.nth, vector.head,
+                     fin.val_one, term_interpretation, rat.le,
+                     function.update_same, list.nth_le];
+          norm_num;
+          rw rat.nonneg_iff_zero_le,
+         { simp, 
+           rw le_iff_lt_or_eq,
+           simp [h] },
+         { rw not_le, simp [h] } },
+       { right,
+         split;
+          simp only [vector.map, list.map, vector.nth, vector.head,
+                     fin.val_one, term_interpretation, rat.le,
+                     function.update_same, list.nth_le];
+          norm_num;
+          rw rat.nonneg_iff_zero_le,
+         { simp,
+           rw le_iff_lt_or_eq,
+           rw gt_iff_lt at h,
+           simp [h] },
+         { rw not_le,
+           rw gt_iff_lt at h,
+           simp [h] } } },
      { intros x,
        use x+1,
+
        split;
          simp only [vector.map, list.map, vector.nth, vector.head,
                     fin.val_one, term_interpretation, rat.le,
@@ -464,8 +535,49 @@ def Q_Model_DLO : Model (DLO_theory) :=
          norm_num;
          try {ring};
          dec_trivial},
-     repeat {sorry},
-end
+     
+     { intros x va₁ y va₂,
+       have subst_x : va₂ 1 = x,
+       { simp only [va₂, va₁],
+
+         rw [function.update_noteq, function.update_same],
+         exact one_ne_two },
+        
+       have subst_y : va₂ 2 = y,
+       { simp only [va₂, va₁],
+         rw function.update_same }, 
+
+       rw models_formula_impl,
+       intro h,
+       use (x + y) / 2,
+       split;
+        split;
+         simp only [vector.map, list.map, vector.nth, vector.head,
+                    fin.val_one, term_interpretation, rat.le,
+                    function.update_same, list.nth_le];
+         norm_num;
+         try {ring};
+         cases h;
+         simp only [vector.map, list.map, vector.nth, vector.head,
+                   fin.val_one, term_interpretation, rat.le,
+                   function.update_same, list.nth_le] at *;
+         norm_num at h_left h_right ⊢;
+         simp only [subst_x, subst_y] at h_left h_right ⊢;
+         rw rat.nonneg_iff_zero_le at h_left h_right ⊢;
+         try {rw not_le at h_right ⊢};
+         try {rw ← mul_le_mul_left zero_lt_two};
+         try {rw ← mul_lt_mul_left zero_lt_two};
+         try {exact rat.nontrivial};
+         simp;
+         ring,
+        
+       { rw [add_comm, ← sub_eq_add_neg],
+         exact h_left },
+       { exact h_right },
+       { exact h_left },
+       { exact h_right } },
+   end
+ }
 
 
 
