@@ -2,6 +2,7 @@ import tactic
 import data.real.basic
 import set_theory.cardinal
 
+
 -- Local imports
 import func lang struc
 
@@ -75,6 +76,12 @@ instance inhabited : inhabited (term L 0) :=
 | _ (func f)   := ∅
 | _ (app t t₀) := vars_in_term t ∪ vars_in_term t₀
 
+/-- Extracts a list of variables from a term (possibly with duplicates) -/
+@[reducible] def vars_in_term_list : Π {n : ℕ}, term L n → list ℕ
+| 0 (con c)    := ∅
+| 0 (var v)    := {v}
+| _ (func f)   := ∅
+| _ (app t t₀) := vars_in_term_list t ∪ vars_in_term_list t₀
 
 /-- The number of variables in a term is computed as the size of
 the finset given by vars_in_term. -/
@@ -163,6 +170,10 @@ infix ` ↔' ` : 80 := bicond
 | [] := ∅
 | (t :: ts) := t.vars_in_term ∪ vars_in_list ts
 
+/-- Helper function that extracts a list of variables from a list of terms -/
+@[reducible] def list_vars_in_list : list (term L 0) → list ℕ
+| [] := ∅
+| (t :: ts) := t.vars_in_term_list ∪ list_vars_in_list ts
 
 /-- Extracts set of variables from the formula-/
 @[reducible] def vars_in_formula : formula L → finset ℕ
@@ -175,6 +186,23 @@ infix ` ↔' ` : 80 := bicond
 | (ϕ₁ ∨' ϕ₂)         := vars_in_formula ϕ₁ ∪ vars_in_formula ϕ₂
 | (∃' v ϕ)           := vars_in_formula ϕ ∪ {v}
 | (∀' v ϕ)           := vars_in_formula ϕ ∪ {v}
+
+/-- Extracts a list of variables from the formula (possibly with duplicates) -/
+@[reducible] def vars_in_formula_list : formula L → list ℕ
+| ⊤'                 := ∅
+| ⊥'                 := ∅
+| (t₁='t₂)           := t₁.vars_in_term_list ∪ t₂.vars_in_term_list
+| (formula.rel _ ts) := list_vars_in_list (ts.to_list)
+| (¬' ϕ)             := vars_in_formula_list ϕ
+| (ϕ₁ ∧' ϕ₂)         := vars_in_formula_list ϕ₁ ∪ vars_in_formula_list ϕ₂
+| (ϕ₁ ∨' ϕ₂)         := vars_in_formula_list ϕ₁ ∪ vars_in_formula_list ϕ₂
+| (∃' v ϕ)           := vars_in_formula_list ϕ ∪ {v}
+| (∀' v ϕ)           := vars_in_formula_list ϕ ∪ {v}
+
+/-- Extracts a list of variables from the formula without duplicates -/
+@[reducible] def vars_in_formula_list_nodup (φ : formula L) : list ℕ :=
+  let v_list := vars_in_formula_list φ in
+  v_list.dedup
 
 /- The set of L-formulas for any language L must have ⊤ as a formula -/
 instance inhabited {L : lang} : inhabited (formula L) :=
@@ -194,10 +222,41 @@ instance inhabited {L : lang} : inhabited (formula L) :=
 | (t₁='t₂)           := var ∈ t₁.vars_in_term ∪ t₂.vars_in_term -- check occur
 | (formula.rel _ ts) := var ∈ vars_in_list (ts.to_list)         -- check occur
 | (¬' ϕ)             := var_occurs_freely ϕ
-| (ϕ₁ ∧' ϕ₂)         := var_occurs_freely ϕ₁ ∨ var_occurs_freely ϕ₂
+| (ϕ₁ ∧' ϕ₂)         := var_occurs_freely ϕ₁ ∨  var_occurs_freely ϕ₂
 | (ϕ₁ ∨' ϕ₂)         := var_occurs_freely ϕ₁ ∨ var_occurs_freely ϕ₂
 | (∃' v ϕ)           := (var ≠ v) ∧ var_occurs_freely ϕ -- check not quantified
 | (∀' v ϕ)           := (var ≠ v) ∧ var_occurs_freely ϕ -- check not quantified
+
+instance var_occurs_freely_decidable (var : ℕ) (φ : formula L) : decidable (var_occurs_freely var φ) := 
+begin
+  induction φ;
+    rw var_occurs_freely,
+  { exact is_false not_false },
+  { exact L },
+  { exact var },
+  { exact is_false not_false },
+  { exact finset.decidable_mem var (φ_ᾰ.vars_in_term ∪ φ_ᾰ_1.vars_in_term) },
+  { exact finset.decidable_mem var (vars_in_list φ_ᾰ_1.to_list) },
+  { exact φ_ih },
+  { exact @or.decidable _ _ φ_ih_ᾰ φ_ih_ᾰ_1 },
+  { exact @or.decidable _ _ φ_ih_ᾰ φ_ih_ᾰ_1 },
+  { exact @and.decidable _ _ _ φ_ih },
+  { exact @and.decidable _ _ _ φ_ih }
+end
+
+/-- Extract free variables from a formula -/
+@[reducible] def free_vars (φ : formula L) : finset ℕ :=
+  let vars := φ.vars_in_formula in
+  vars.filter (λ var, φ.var_occurs_freely var)
+
+/-- Extract a list of free variables from a formula -/
+@[reducible] def free_vars_list (φ : formula L) : list ℕ :=
+  let vars := φ.vars_in_formula_list in
+  vars.filter (λ var, φ.var_occurs_freely var)
+
+@[reducible] def count_free_vars (φ : formula L) : ℕ :=   
+  finset.card (φ.free_vars)
+
 
 end formula
 
