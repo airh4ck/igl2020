@@ -1,5 +1,5 @@
 import tactic
-import set_theory.cardinal
+import set_theory.cardinal.basic
 
 -- Local imports
 import func

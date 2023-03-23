@@ -56,8 +56,7 @@ def struc.expanded_struc {L: lang} (M : struc L) : struc M.expanded_lang :=
   {C := λ c, sum.cases_on c id M.C,
    .. M}
 
-
-local notation f^M := M.F f -- f^M denotes the interpretation of f in M.
+local notation (name := function_interpretation) f^M := M.F f -- f^M denotes the interpretation of f in M.
 local notation r`̂`M : 150 := M.R r -- r̂M denotes the interpretation of r in
                               -- M. (type as a variant of \^)
 
@@ -100,9 +99,22 @@ structure isomorphism {L: lang} (M N : struc L) extends (embedding M N) : Type :
 
 /-- We argue that every structure has an isomorphism to itself via the identity
   map.-/
+-- instance isomorphism.inhabited {L : lang} {M : struc L} : inhabited (isomorphism M M) :=
+--   {default := {η_bij := ⟨function.injective_id, function.surjective_id⟩,
+--                .. default (embedding M M)}}
+
 instance isomorphism.inhabited {L : lang} {M : struc L} : inhabited (isomorphism M M) :=
-  {default := {η_bij := function.bijective_id,
-               .. default (embedding M M)}}
+  {
+    default := 
+    {
+      η_bij := function.bijective_id,
+      η := id,
+      η_inj := function.injective_id,
+      η_F := by simp,
+      η_R := by simp,
+      η_C := λ _, rfl
+    }
+  }
 
 
 

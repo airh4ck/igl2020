@@ -1,6 +1,6 @@
 import tactic
 import data.real.basic
-import set_theory.cardinal
+import set_theory.cardinal.basic
 
 
 -- Local imports
@@ -369,7 +369,7 @@ end
 
 def models_sentence (M : struc L) (σ : sentence L) : Prop :=
   ∃ va : ℕ → M.univ, va ⊨ σ
-notation M` ⊨ `σ : 100 := models_sentence M σ -- Type this as a variant of \entails.
+notation (name := models_formula) M` ⊨ `σ : 100 := models_sentence M σ -- Type this as a variant of \entails.
 
 lemma models_formula_or_negation (va : ℕ → M.univ) :
   models_formula va ϕ ∨ models_formula va (¬' ϕ) :=
@@ -385,7 +385,7 @@ lemma neg_of_sentence (σ : sentence L) (var : ℕ) :
   σ.property var
 
 def neg (σ : sentence L) : sentence L := ⟨¬' ↑σ, neg_of_sentence σ⟩
-prefix ` ¬' ` :  60 := neg
+prefix (name := negate_sentence) ` ¬' ` :  60 := neg
 end sentence
 
 
@@ -656,7 +656,7 @@ begin
   cases σ with ϕ hϕ,
   simp,
   haveI Muniv_in := M.univ_inhabited,
-  have va := function.const ℕ (default M.univ),
+  have va := function.const ℕ (@default M.univ),
   cases ϕ,
     case formula.tt
     { simp [models_formula]},         -- every var-assignment satisfies ⊤'
