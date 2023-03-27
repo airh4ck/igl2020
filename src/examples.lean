@@ -83,6 +83,35 @@ def ordered_ring_lang : lang := {R := λ n : ℕ+,
                                 ..ring_lang}
 
 
+
+
+
+def stupid_lang : lang := { R := λ n : ℕ+, if n = 2 then fin 1 else empty,
+                            C := empty,
+                            F := λ _, empty }
+
+def struc_of_stupid_lang : struc (stupid_lang) :=
+  {
+    univ := ℕ,
+    F := λ _, empty.elim,
+    C := empty.elim,
+    R := λ n r v, by { cases n, cases n_val,
+                       { linarith },
+                       cases n_val,
+                       { cases r },
+                       cases n_val,
+                       unfold_coes at v,
+                       cases r,
+                       { cases r_val,
+                         exact (v.nth 0 < v.nth 1),
+                         rw nat.succ_eq_add_one at r_property,
+                         linarith },
+                       cases r } 
+                         
+  }
+
+
+
 /-- An inhabited type is a structure of the set language-/
 def type_is_struc_of_set_lang {A : Type} [inhabited A] : struc (set_lang) :=
  {univ := A,

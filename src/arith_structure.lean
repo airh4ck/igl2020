@@ -60,31 +60,40 @@ instance arith_lang_to_lang_coe : has_coe (arith_lang) (lang) := ⟨arith_lang.t
     simp [h]
   })
 
+
 lemma list.forall_indexes_of_lt_length {α : Type*} [decidable_eq α] (l : list α) (x : α) :
   ∀ i ∈ l.indexes_of x, i < l.length :=
 begin
-  induction l with hd tl ih;
-    intros i H;
-    simp only [list.indexes_of, list.find_indexes_eq_map_indexes_values,
-               list.indexes_values_eq_filter_enum] at H,
-
-  { simp [list.enum_nil, list.filter_nil, list.map_nil] at H,
+  induction (l.indexes_of x),
+  { intros,
+    simp at H,
     contradiction },
-  { cases (decidable.eq_or_ne x hd),
-    { simp [list.enum_cons] at H,
-      cases H,
-      { simp [H] },
-      { sorry } },
-    sorry }
+  { intros,
+    cases (list.eq_or_mem_of_mem_cons H),
+    { sorry },
+    { exact ih i h } }
 end
 
 lemma index_of_nth_entry_lt_length {α : Type*} [decidable_eq α] (l : list α) (n : ℕ) (x : α) (h₁ : n < l.count x) :
   l.index_of_nth_entry n x h₁ < l.length :=
 begin
-  sorry
+  simp only [list.index_of_nth_entry],
+
+  have h' : n < (list.indexes_of x l).length := by {
+    simp only [list.indexes_of, list.find_indexes_eq_map_indexes_values,
+               list.indexes_values_eq_filter_enum, list.length_map],
+
+    rw [← list.length_map (prod.snd) _, ← list.map_filter (eq x) (prod.snd) l.enum,
+        ← list.countp_eq_length_filter, ← list.count],
+    simp [h₁]
+  },
+  let i := (list.indexes_of x l).nth_le n h',
+  simp only [←i], 
+  have h'' := l.forall_indexes_of_lt_length x i,
+  exact h'' ((l.indexes_of x).nth_le_mem n h')
 end
 
-def arith_struc.to_struc (L : arith_lang) (S : arith_struc L) : struc L :=
+def arith_struc.to_struc {L : arith_lang} (S : arith_struc L) : struc L :=
   {
     univ := ℕ,
     F := λ _, empty.elim,
@@ -119,5 +128,7 @@ def arith_struc.to_struc (L : arith_lang) (S : arith_struc L) : struc L :=
                      }
                   else false
   }
+
+instance arith_struc_to_struc_coe {L : arith_lang} : has_coe (arith_struc L) (struc L) := ⟨arith_struc.to_struc⟩
 
 end arithmetic_structure

@@ -39,6 +39,12 @@ instance inhabited {L : lang} : inhabited (struc L) :=
 /-- The cardinality of a structure is the cardinality of its domain.-/
 def card {L : lang} (M : struc L) : cardinal := cardinal.mk M.univ
 
+variables {L : lang} {M : struc L} {n : ℕ+} {p : L.R n}
+#check M.R p
+
+instance struc.has_mem_rels {L : lang} {M : struc L} {n : ℕ+} {p : L.R n} : has_mem (vector M.univ n) (M.R p) :=
+  ⟨λ v _, v ∈ (M.R p)⟩
+
 end struc
 
 /- Define an expanded language, given a struc M.

@@ -37,7 +37,7 @@ This serves 2 purposes:
 We show that (Funcs α) is inhabited by constructing a 0-level Func
 that returns an arbitrary α. -/
 instance inhabited {α : Type} [inhabited α] : inhabited (Funcs α) :=
- {default := ⟨0, default α⟩}
+ {default := ⟨0, default⟩}
 
 
 /-- Define a constructor for Func. It takes in a total function `f` and turns
