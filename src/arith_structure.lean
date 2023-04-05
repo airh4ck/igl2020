@@ -1,14 +1,6 @@
 import model
 import examples
 
--- def arith_lang (n : ℕ+) (ar : fin n → ℕ+) : lang :=
---   {
---     F := λ _, empty,
---     C := empty,
---     R := λ x, let ar_vec := vector.of_fn ar in 
---               if x ∈ ar_vec.to_list then fin (ar_vec.to_list.count x) else empty
---   }
-
 structure arith_lang : Type 1 :=
   (n : ℕ+)          -- number of relations
   (ar : fin n → ℕ+) --arity of each relation
@@ -27,28 +19,10 @@ structure arith_struc (L : arith_lang) :=
   (rels : vector (formula ordered_semiring_lang) L.n)            -- formulae defining relations
   (ar_proof : ∀i, formula.count_free_vars (rels.nth i) = L.ar i) -- proof that i-th relation has arity `p_ar[i]`)
 
--- structure arith_struc :=           
--- (n : ℕ+)            -- number of relations
--- (p_ar : fin n → ℕ+) -- arity of each relation
--- (rels : vector (formula ordered_semiring_lang) n) -- formulae defining relations
--- (ar_proof : ∀i, formula.count_free_vars (rels.nth i) = p_ar i) -- proof that i-th relation has arity p_ar[i]
-
 namespace arithmetic_structure
 
 instance arith_lang_to_lang_coe : has_coe (arith_lang) (lang) := ⟨arith_lang.to_lang⟩
  
--- @[reducible] def find_nth {α : Type*} [decidable_eq α] : Π (l : list α) (n) (x), (n < l.count x) → ℕ
--- | []         _       _ h := by { simp at h, contradiction }
--- | (hd :: tl) 0       x h := if h' : hd = x then 
--- | (hd :: tl) (i + 1) x h := if h' : hd = x then 
---                               1 + (find_nth tl i x (by { simp [h'] at h, exact h }))
---                             else find_nth tl i x (by { rw ← ne.def at h',
---                                                        rw list.count_cons_of_ne at h,
---                                                        have h'' := lt_add_one i,
---                                                        exact lt_trans h'' h,
---                                                        symmetry,
---                                                        exact h' })
-
 @[reducible] def list.index_of_nth_entry {α : Type*} [decidable_eq α] (l : list α) (n : ℕ) (x : α) (h : n < l.count x) : ℕ :=
   let indices := l.indexes_of x in
   indices.nth_le n (by {
