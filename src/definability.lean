@@ -1,6 +1,5 @@
 import model
 import arith_structure
-import util
 
 namespace definability
 

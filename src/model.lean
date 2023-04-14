@@ -251,11 +251,14 @@ end
 
 /-- Extract a list of free variables from a formula -/
 @[reducible] def free_vars_list (φ : formula L) : list ℕ :=
-  let vars := φ.vars_in_formula_list in
+  let vars := φ.vars_in_formula_list_nodup in
   vars.filter (λ var, φ.var_occurs_freely var)
 
 @[reducible] def count_free_vars (φ : formula L) : ℕ :=   
   finset.card (φ.free_vars)
+
+@[reducible] def count_free_vars_list (φ : formula L) : ℕ :=
+  φ.free_vars_list.length
 
 
 end formula
