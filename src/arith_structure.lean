@@ -71,17 +71,28 @@ begin
   exact h'' ((l.indexes_of x).nth_le_mem n h')
 end
 
-
 lemma list.nth_index_of_nth_entry_eq {α : Type*} [decidable_eq α] (l : list α) (n : ℕ) (x : α) (h : n < l.count x) :
   l.nth_le (l.index_of_nth_entry n x h) (index_of_nth_entry_lt_length l n x h) = x :=
 begin
   simp [list.index_of_nth_entry, list.indexes_of, 
         list.find_indexes_eq_map_indexes_values, list.indexes_values_eq_filter_enum],
-  sorry
+  
+  have h₁ : n < (list.filter (eq x ∘ prod.snd) l.enum).length,
+  { rw [← list.length_map (prod.snd) _, ← list.map_filter (eq x) (prod.snd) l.enum,
+        ← list.countp_eq_length_filter, ← list.count],
+    simp [h] },
+  
+  have h₂ := list.nth_le_mem (list.filter (eq x ∘ prod.snd) l.enum) n h₁,
+  simp at h₂,
+  simp only [list.mem_iff_nth_le] at h₂,
+  have h₃ := h₂.1,
+  rcases h₃ with ⟨i, h', h''⟩,
+  have h₄ := list.nth_le_enum l i h',
+  simp only [← h'', h₄],
+  have h₅ := h₂.2,
+  simp only [← h'', h₄] at h₅,
+  simp [h₅]
 end
-
-
-
 
 def arith_struc.to_struc {L : arith_lang} (S : arith_struc L) : struc L :=
   {
