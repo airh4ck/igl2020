@@ -260,6 +260,11 @@ end
 @[reducible] def count_free_vars_list (φ : formula L) : ℕ :=
   φ.free_vars_list.length
 
+lemma free_vars_list_length_eq_count_free_vars {φ : formula L} :
+  φ.free_vars_list.length = φ.count_free_vars :=
+begin
+  sorry
+end
 
 end formula
 
@@ -355,6 +360,12 @@ lemma models_impl_iff_models_not_or {va : ℕ → M.univ} {φ₁ φ₂ : formula
   va ⊨ (φ₁ →' φ₂) ↔ va ⊨ ((¬'φ₁) ∨' φ₂) :=
 begin
   rw formula.impl
+end
+
+lemma not_models_formula_iff_models_not {va : ℕ → M.univ} {φ : formula L} :
+  ¬va ⊨ φ ↔ va ⊨ ¬' φ :=
+begin
+  simp [models_formula]
 end
 
 lemma models_formula_impl {va : ℕ → M.univ} {φ₁ φ₂ : formula L} : va ⊨ (φ₁ →' φ₂) ↔ va ⊨ φ₁ → va ⊨ φ₂ := 
